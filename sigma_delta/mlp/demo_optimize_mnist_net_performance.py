@@ -1,4 +1,6 @@
 from collections import OrderedDict
+import os
+import pickle
 import numpy as np
 from artemis.fileman.experiment_record import ExperimentFunction
 from artemis.general.numpy_helpers import get_rng
@@ -41,10 +43,26 @@ def demo_optimize_mnist_net(
         smoothing_steps=1000,
         seed=1234):
 
+    # Download MNIST from:
+    # https://academictorrents.com/details/323a0048d87ca79b68f12a6350a57776b6a3b7fb
+    # Place mnist.pkl in ~/.artemis/data.
     train_data, train_targets, test_data, test_targets = get_mnist_dataset(flat=True).to_onehot().xyxy
 
     params = train_conventional_mlp_on_mnist(hidden_sizes=hidden_sizes, hidden_activations=hidden_activations, output_activation=output_activation, rng=seed)
     weights, biases = params[::2], params[1::2]
+
+    # Aftermarket code to save parameters for the dense MNIST model.
+    filename = 'sigma_delta_dense_mnist.npz'
+    if not os.path.isfile(filename):
+        np.savez(
+            filename,
+            dense_1_weights=weights[0],
+            dense_1_biases=biases[0],
+            dense_2_weights=weights[1],
+            dense_2_biases=biases[1],
+            dense_3_weights=weights[2],
+            dense_3_biases=biases[2],
+        )
 
     rng = get_rng(seed+1)
 
@@ -81,6 +99,13 @@ def demo_optimize_mnist_net(
                     dbplot((current_flop_counts/1e6, current_class_error), '%s class-curve' % (comp_weight, ), axis= 'class-curve', plot_type='trajectory+', xlabel='MFlops', ylabel='class-error')
             f_train(training_minibatch)
         optimized_results['lambda=%.3g' % (comp_weight, )] = get_mnist_results_with_parameters(weights=weights, biases=biases, scales = ks, hidden_activations=hidden_activations, output_activation=output_activation, smoothing_steps=smoothing_steps)
+
+    # Aftermarket code to save experiment results.
+    filename = 'sigma_delta_original.p'
+    if not os.path.isfile(filename):
+        with open(filename, 'wb') as f:
+            pickle.dump(optimized_results, f)
+
     return optimized_results
 
 

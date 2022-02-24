@@ -1,5 +1,6 @@
 from collections import OrderedDict
 import itertools
+import os
 import numpy as np
 from tabulate import tabulate
 import matplotlib.pyplot as plt
@@ -40,6 +41,20 @@ def get_mnist_results_with_parameters(weights, biases, scales = None, hidden_act
     """
     mnist = get_mnist_dataset(flat=True, n_training_samples=n_samples, n_test_samples=n_samples)
     temp_mnist = get_temporal_mnist_dataset(flat=True, smoothing_steps=smoothing_steps, n_training_samples=n_samples, n_test_samples=n_samples)
+
+    # Aftermarket code to save the MNIST and temporal MNIST datasets.
+    for dataset, dataset_name in [(mnist, 'mnist'), (temp_mnist, 'temporal_mnist')]:
+        filename = dataset_name + '.npz'
+        if not os.path.isfile(filename):
+            dataset_tuple = dataset.xyxy
+            np.savez(
+                filename,
+                x_train=dataset_tuple[0],
+                y_train=dataset_tuple[1],
+                x_test=dataset_tuple[2],
+                y_test=dataset_tuple[3],
+            )
+
     results = OrderedDict()
     p = ProgressIndicator(2*3*2)
     for dataset_name, (tr_x, tr_y, ts_x, ts_y) in [('mnist', mnist.xyxy), ('temp_mnist', temp_mnist.xyxy)]:
