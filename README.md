@@ -9,6 +9,12 @@ cd sigma-delta
 source setup.sh
 ```
 
+Or to use a Conda environment instead of a virtualenv:
+```
+conda env create -f environment.yml
+conda activate sigma-delta
+```
+
 To run the experiments:
 ```
 python sigma_delta/all_experiments.py
